@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, timedelta
 from functools import wraps
 import json
+import os
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -927,11 +928,16 @@ def create_default_user():
         db.session.commit()
         print("Default user created: username='owner', password='owner123'")
 
+# Application startup
 if __name__ == '__main__':
+    # Read environment variables
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 10000))
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
     with app.app_context():
         db.create_all()
         create_default_user()
     
     print("MrCheap Shop System started successfully!")
-    print("Access the system at: http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host=host, port=port, debug=debug)
