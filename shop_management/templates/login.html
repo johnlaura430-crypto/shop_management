@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block login_content %}
-<div class="container">
-    <div class="row justify-content-center">
+<div class="container-fluid vh-100">
+    <div class="row h-100 justify-content-center align-items-center">
         <div class="col-md-6">
-            <div class="card mt-5">
+            <div class="card">
                 <div class="card-body">
-                    <h3 class="card-title text-center">Login to MrCheap </h3>
+                    <h3 class="card-title text-center">Login to MrCheap</h3>
                     <form method="POST">
                         <div class="mb-3">
                             <label class="form-label">Username</label>
@@ -18,12 +18,9 @@
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Login</button>
                     </form>
-                
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
-
