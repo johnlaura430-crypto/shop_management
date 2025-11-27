@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Summary{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h3>Daily Summary - {{ today_date.strftime('%Y-%m-%d') }}</h3>
+    <a href="{{ url_for('reports') }}" class="btn btn-outline-primary">
+        <i class="fas fa-chart-bar"></i> Full Reports
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5>Today's Revenue</h5>
+                <h2>{{ format_currency(today_revenue) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5>Items Sold</h5>
+                <h2>{{ total_items_sold }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h5>Purchase Cost</h5>
+                <h2>{{ format_currency(today_purchase_cost) }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Today's Sales</h5>
+            </div>
+            <div class="card-body">
+                {% for sale in today_sales %}
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>{{ sale.product.name }}</span>
+                    <span>{{ sale.quantity }} x {{ format_currency(sale.unit_price) }}</span>
+                    <span class="fw-bold">{{ format_currency(sale.total_amount) }}</span>
+                </div>
+                {% endfor %}
+                {% if not today_sales %}
+                <p class="text-muted text-center">No sales today</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Today's Purchases</h5>
+            </div>
+            <div class="card-body">
+                {% for purchase in today_purchases %}
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>{{ purchase.product.name }}</span>
+                    <span>{{ purchase.quantity }} x {{ format_currency(purchase.unit_price) }}</span>
+                    <span class="fw-bold">{{ format_currency(purchase.total_amount) }}</span>
+                </div>
+                {% endfor %}
+                {% if not today_purchases %}
+                <p class="text-muted text-center">No purchases today</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}{{ get_text('reports') }}{% endblock %}
+{% block page_title %}{{ get_text('reports') }}{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ get_text('total_sales') }}</h5>
+                <h2 class="card-text">{{ format_currency(total_sales) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ get_text('total_purchases') }}</h5>
+                <h2 class="card-text">{{ format_currency(total_purchases) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ get_text('total_profit') }}</h5>
+                <h2 class="card-text">{{ format_currency(profit) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ get_text('low_stock_items') }}</h5>
+                <h2 class="card-text">{{ low_stock_products|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Report Section -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>{{ get_text('sales_report') }}</h5>
+        <div class="btn-group">
+            <button class="btn btn-outline-primary btn-sm period-btn" data-period="daily">{{ get_text('today') }}</button>
+            <button class="btn btn-outline-primary btn-sm period-btn" data-period="weekly">{{ get_text('good') }}</button>
+            <button class="btn btn-outline-primary btn-sm period-btn" data-period="monthly">{{ get_text('average') }}</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <canvas id="salesChart" height="100"></canvas>
+    </div>
+</div>
+
+<!-- Purchases Report Section -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>{{ get_text('purchases_report') }}</h5>
+        <div class="btn-group">
+            <button class="btn btn-outline-success btn-sm purchase-period-btn" data-period="daily">{{ get_text('today') }}</button>
+            <button class="btn btn-outline-success btn-sm purchase-period-btn" data-period="weekly">{{ get_text('good') }}</button>
+            <button class="btn btn-outline-success btn-sm purchase-period-btn" data-period="monthly">{{ get_text('average') }}</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <canvas id="purchasesChart" height="100"></canvas>
+    </div>
+</div>
+
+<!-- Sales Analytics Section -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-analytics me-2"></i>{{ get_text('sales_analytics') }}</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary analytics-period-btn" data-period="all" data-type="sales">Zote</button>
+                    <button class="btn btn-outline-primary analytics-period-btn" data-period="daily" data-type="sales">{{ get_text('today') }}</button>
+                    <button class="btn btn-outline-primary analytics-period-btn" data-period="weekly" data-type="sales">{{ get_text('good') }}</button>
+                    <button class="btn btn-outline-primary analytics-period-btn" data-period="monthly" data-type="sales">{{ get_text('average') }}</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="salesAnalyticsTable">
+                        <thead>
+                            <tr>
+                                <th>{{ get_text('product_name') }}</th>
+                                <th>{{ get_text('quantity_sold') }}</th>
+                                <th>{{ get_text('revenue') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filled by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>{{ get_text('purchase_analytics') }}</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-success analytics-period-btn" data-period="all" data-type="purchases">Zote</button>
+                    <button class="btn btn-outline-success analytics-period-btn" data-period="daily" data-type="purchases">{{ get_text('today') }}</button>
+                    <button class="btn btn-outline-success analytics-period-btn" data-period="weekly" data-type="purchases">{{ get_text('good') }}</button>
+                    <button class="btn btn-outline-success analytics-period-btn" data-period="monthly" data-type="purchases">{{ get_text('average') }}</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="purchasesAnalyticsTable">
+                        <thead>
+                            <tr>
+                                <th>{{ get_text('product_name') }}</th>
+                                <th>{{ get_text('quantity_bought') }}</th>
+                                <th>{{ get_text('total_cost') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filled by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Alert Section -->
+{% if low_stock_products %}
+<div class="card border-warning mt-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>{{ get_text('low_stock_warning') }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-warning mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ get_text('product_name') }}</th>
+                        <th>{{ get_text('stock_quantity') }}</th>
+                        <th>{{ get_text('min_stock') }}</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in low_stock_products %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.stock_quantity }}</td>
+                        <td>{{ product.min_stock }}</td>
+                        <td>
+                            <span class="badge bg-danger">{{ get_text('need_restock') }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Global chart variables
+let salesChart, purchasesChart;
+let currentPeriod = 'daily';
+let currentPurchasePeriod = 'daily';
+let currentSalesAnalyticsPeriod = 'all';
+let currentPurchasesAnalyticsPeriod = 'all';
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadSalesChart('daily');
+    loadPurchasesChart('daily');
+    loadSalesAnalytics('all');
+    loadPurchasesAnalytics('all');
+    
+    // Period button event listeners for charts
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentPeriod = this.dataset.period;
+            loadSalesChart(currentPeriod);
+            // Update button states
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    document.querySelectorAll('.purchase-period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentPurchasePeriod = this.dataset.period;
+            loadPurchasesChart(currentPurchasePeriod);
+            // Update button states
+            document.querySelectorAll('.purchase-period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Analytics period button event listeners
+    document.querySelectorAll('.analytics-period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const period = this.dataset.period;
+            const type = this.dataset.type;
+            
+            if (type === 'sales') {
+                currentSalesAnalyticsPeriod = period;
+                loadSalesAnalytics(period);
+                // Update button states for sales
+                document.querySelectorAll('.analytics-period-btn[data-type="sales"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            } else {
+                currentPurchasesAnalyticsPeriod = period;
+                loadPurchasesAnalytics(period);
+                // Update button states for purchases
+                document.querySelectorAll('.analytics-period-btn[data-type="purchases"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
+    
+    // Set initial active buttons
+    document.querySelector('.period-btn[data-period="daily"]').classList.add('active');
+    document.querySelector('.purchase-period-btn[data-period="daily"]').classList.add('active');
+    document.querySelector('.analytics-period-btn[data-period="all"][data-type="sales"]').classList.add('active');
+    document.querySelector('.analytics-period-btn[data-period="all"][data-type="purchases"]').classList.add('active');
+});
+
+function loadSalesChart(period) {
+    fetch(`/api/sales_chart_data?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (salesChart) {
+                salesChart.destroy();
+            }
+            
+            // Get period label in current language
+            let periodLabel = '';
+            if (period === 'daily') {
+                periodLabel = '{{ get_text("today") }}';
+            } else if (period === 'weekly') {
+                periodLabel = '{{ get_text("good") }}';
+            } else {
+                periodLabel = '{{ get_text("average") }}';
+            }
+            
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: `{{ get_text('sales_report') }} (${periodLabel})`,
+                        data: data.data,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `{{ get_text('sales_report') }} - ${periodLabel}`
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'TZS ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function loadPurchasesChart(period) {
+    fetch(`/api/purchases_chart_data?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('purchasesChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (purchasesChart) {
+                purchasesChart.destroy();
+            }
+            
+            // Get period label in current language
+            let periodLabel = '';
+            if (period === 'daily') {
+                periodLabel = '{{ get_text("today") }}';
+            } else if (period === 'weekly') {
+                periodLabel = '{{ get_text("good") }}';
+            } else {
+                periodLabel = '{{ get_text("average") }}';
+            }
+            
+            purchasesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: `{{ get_text('purchases_report') }} (${periodLabel})`,
+                        data: data.data,
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `{{ get_text('purchases_report') }} - ${periodLabel}`
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'TZS ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function loadSalesAnalytics(period = 'all') {
+    fetch(`/api/sales_analytics?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('salesAnalyticsTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            
+            if (data.analytics.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="3" class="text-center text-muted">{% if current_language == 'en' %}No sales data for ${period} period{% else %}Hakuna data ya mauzo kwa kipindi cha ${period}{% endif %}</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            data.analytics.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.product_name}</td>
+                    <td>${item.total_quantity}</td>
+                    <td class="fw-bold text-success">${formatCurrency(item.total_revenue)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        });
+}
+
+function loadPurchasesAnalytics(period = 'all') {
+    fetch(`/api/purchases_analytics?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('purchasesAnalyticsTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            
+            if (data.analytics.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="3" class="text-center text-muted">{% if current_language == 'en' %}No purchases data for ${period} period{% else %}Hakuna data ya ununuzi kwa kipindi cha ${period}{% endif %}</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            data.analytics.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.product_name}</td>
+                    <td>${item.total_quantity}</td>
+                    <td class="fw-bold text-primary">${formatCurrency(item.total_cost)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        });
+}
+
+// Helper function to format currency
+function formatCurrency(amount) {
+    return 'TZS ' + Math.round(amount).toLocaleString();
+}
+</script>
+
+<style>
+.period-btn.active, 
+.purchase-period-btn.active, 
+.analytics-period-btn.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.analytics-period-btn[data-type="sales"].active {
+    background-color: #007bff;
+}
+
+.analytics-period-btn[data-type="purchases"].active {
+    background-color: #28a745;
+}
+</style>
+{% endblock %}
