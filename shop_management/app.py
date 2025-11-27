@@ -5,6 +5,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, timedelta
 from functools import wraps
 import json
+import os
+
+# Read environment variables
+host = os.environ.get('HOST', '0.0.0.0')  # Default to 0.0.0.0 if not set
+port = int(os.environ.get('PORT', 10000)) # Default to 10000 if not set
+debug = os.environ.get('DEBUG', 'False').lower() == 'true'  # Default to False
+
+# Start your app
+if __name__ == '__main__':
+    app.run(host=host, port=port, debug=debug)
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -934,4 +944,5 @@ if __name__ == '__main__':
     
     print("MrCheap Shop System started successfully!")
     print("Access the system at: http://localhost:5000")
+
     app.run(debug=True, host='0.0.0.0', port=5000)
