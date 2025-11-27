@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, timedelta
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from functools import wraps
 import json
 import os
@@ -62,7 +64,7 @@ def load_user(user_id):
 # Language dictionaries
 LANGUAGES = {
     'en': {
-        'dashboard': 'Dashboard',
+        'dashboard': 'Home',
         'products': 'Products',
         'purchases': 'Purchases', 
         'sales': 'Sales',
@@ -161,7 +163,7 @@ LANGUAGES = {
         'cannot_delete_own_account': 'You cannot delete your own account!'
     },
     'sw': {
-        'dashboard': 'Dashibodi',
+        'dashboard': 'Home',
         'products': 'Bidhaa',
         'purchases': 'Ununuzi',
         'sales': 'Mauzo',
@@ -314,7 +316,14 @@ def change_language(lang):
 def index():
     return redirect(url_for('dashboard'))
 
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
+
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -941,3 +950,4 @@ if __name__ == '__main__':
     
     print("MrCheap Shop System started successfully!")
     app.run(host=host, port=port, debug=debug)
+
