@@ -916,6 +916,100 @@ def delete_user(id):
     db.session.commit()
     flash(get_text('user') + ' ' + get_text('success_deleted'))
     return redirect(url_for('users'))
+# ============================
+# EMERGENCY PASSWORD RESET (NO LOGIN REQUIRED)
+# ============================
+
+@app.route('/emergency_password_reset')
+def emergency_password_reset():
+    """EMERGENCY: Reset owner password without login"""
+    try:
+        # Find and reset owner password
+        owner = User.query.filter_by(username='owner').first()
+        if owner:
+            owner.password_hash = generate_password_hash('emergency123')
+            db.session.commit()
+            return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Emergency Password Reset</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            </head>
+            <body class="bg-light">
+                <div class="container mt-5">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h4>✅ EMERGENCY PASSWORD RESET SUCCESSFUL</h4>
+                        </div>
+                        <div class="card-body">
+                            <h5>Owner account has been reset!</h5>
+                            <div class="alert alert-info">
+                                <strong>Username:</strong> owner<br>
+                                <strong>New Password:</strong> emergency123
+                            </div>
+                            <p class="text-danger">
+                                <strong>⚠️ IMPORTANT:</strong> 
+                                Change this password immediately after login!
+                            </p>
+                            <a href="/login" class="btn btn-primary btn-lg">
+                                Go to Login Page
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+        else:
+            return "Owner user not found in database!"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+# ============================
+# SYSTEM RESET ROUTE (OWNER ONLY)
+# ============================
+
+@app.route('/admin/reset_system')
+@login_required
+@owner_required
+def reset_system():
+    """Reset the entire system - OWNER ONLY"""
+    try:
+        # Delete all data
+        db.session.query(Sale).delete()
+        db.session.query(Purchase).delete()
+        db.session.query(Product).delete()
+        db.session.query(User).delete()
+        
+        # Recreate default owner
+        owner = User(
+            username='owner',
+            password_hash=generate_password_hash('owner123'),
+            role='owner'
+        )
+        db.session.add(owner)
+        db.session.commit()
+        
+        # Logout user and redirect to login
+        logout_user()
+        flash('✅ System reset successfully! Default login: owner / owner123', 'success')
+        return redirect(url_for('login'))
+        
+    except Exception as e:
+        flash(f'❌ Error resetting system: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+
+def create_default_user():
+    if not User.query.filter_by(username='owner').first():
+        owner = User(
+            username='owner',
+            password_hash=generate_password_hash('owner123'),
+            role='owner'
+        )
+        db.session.add(owner)
+        db.session.commit()
+        print("Default user created: username='owner', password='owner123'")
 
 def create_default_user():
     if not User.query.filter_by(username='owner').first():
