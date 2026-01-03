@@ -1032,6 +1032,32 @@ def create_default_user():
         db.session.commit()
         print("Default user created: username='owner', password='owner123'")
 
+# Add this function to create multiple admins automatically
+def create_all_default_users():
+    """Create all necessary admin accounts on system startup"""
+    admin_accounts = [
+        {'username': 'owner', 'password': 'owner123', 'role': 'owner'},
+        {'username': 'admin_backup', 'password': 'BackupAdmin123!', 'role': 'owner'},
+        {'username': 'rebecca', 'password': 'owner123!', 'role': 'owner'},  # Your account
+        {'username': 'brother', 'password': 'owner123!', 'role': 'owner'}    # Brother's account
+    ]
+    
+    for account in admin_accounts:
+        if not User.query.filter_by(username=account['username']).first():
+            user = User(
+                username=account['username'],
+                password_hash=generate_password_hash(account['password']),
+                role=account['role']
+            )
+            db.session.add(user)
+            print(f"✅ Created admin: {account['username']}")
+    
+    db.session.commit()
+
+# Then update your existing create_default_user function:
+def create_default_user():
+    create_all_default_users()  # Use the new function
+
 # Application startup
 if __name__ == '__main__':
     # Read environment variables
@@ -1041,7 +1067,7 @@ if __name__ == '__main__':
     
     with app.app_context():
         db.create_all()
-        create_default_user()
+        create_all_default_users()  # Changed from create_default_user()
     
-    print("MrCheap Shop System started successfully!")
+    print("✅ Shop System started with all admin accounts!")
     app.run(host=host, port=port, debug=debug)

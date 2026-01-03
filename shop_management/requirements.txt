@@ -1,3 +1,7 @@
+psycopg2-binary>=2.9.6
+# or if that fails:
+psycopg2>=2.9.6
+
 Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
 Flask-Login==0.6.3
