@@ -8,7 +8,18 @@ import json
 import os
 
 app = Flask(__name__)
+# Change this line at the top:
 app.config.from_object('config.Config')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', '').replace(
+    'postgres://', 'postgresql://'
+)
+
+# If no DATABASE_URL (local development), use SQLite
+if not app.config['SQLALCHEMY_DATABASE_URI']:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop.db'
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -260,6 +271,23 @@ LANGUAGES = {
         'cannot_delete_own_account': 'Huwezi kufuta akaunti yako mwenyewe!'
     }
 }
+
+@app.route('/debug/database')
+def debug_database():
+    """Check database configuration and data"""
+    from flask import jsonify
+    
+    info = {
+        'database_uri': str(app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')),
+        'total_products': Product.query.count(),
+        'total_users': User.query.count(),
+        'total_sales': Sale.query.count(),
+        'total_purchases': Purchase.query.count(),
+        'is_postgresql': 'postgresql' in str(app.config.get('SQLALCHEMY_DATABASE_URI', '')).lower(),
+        'is_sqlite': 'sqlite' in str(app.config.get('SQLALCHEMY_DATABASE_URI', '')).lower()
+    }
+    
+    return jsonify(info)
 
 @app.before_request
 def before_request():
