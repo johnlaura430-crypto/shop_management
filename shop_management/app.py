@@ -1037,9 +1037,8 @@ def create_all_default_users():
     """Create all necessary admin accounts on system startup"""
     admin_accounts = [
         {'username': 'owner', 'password': 'owner123', 'role': 'owner'},
-        {'username': 'admin_backup', 'password': 'BackupAdmin123!', 'role': 'owner'},
-        {'username': 'rebecca', 'password': 'owner123!', 'role': 'owner'},  # Your account
-        {'username': 'brother', 'password': 'owner123!', 'role': 'owner'}    # Brother's account
+        {'username': 'rebecca', 'password': 'owner123', 'role': 'owner'},  # backup
+        
     ]
     
     for account in admin_accounts:
