@@ -10,16 +10,6 @@ import os
 app = Flask(__name__)
 # Change this line at the top:
 app.config.from_object('config.Config')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', '').replace(
-    'postgres://', 'postgresql://'
-)
-
-# If no DATABASE_URL (local development), use SQLite
-if not app.config['SQLALCHEMY_DATABASE_URI']:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop.db'
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -288,6 +278,34 @@ def debug_database():
     }
     
     return jsonify(info)
+
+@app.route('/debug/db_check')
+def debug_db_check():
+    """Check database connection and type"""
+    from sqlalchemy import text
+    
+    try:
+        # Try to execute a simple query
+        result = db.session.execute(text('SELECT 1')).fetchone()
+        db_connected = bool(result)
+        
+        # Check database type
+        db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        
+        info = {
+            'database_type': 'PostgreSQL' if 'postgresql' in db_uri else 'SQLite' if 'sqlite' in db_uri else 'Unknown',
+            'database_uri_short': db_uri[:50] + '...' if len(db_uri) > 50 else db_uri,
+            'database_connected': db_connected,
+            'total_products': Product.query.count(),
+            'total_users': User.query.count(),
+            'env_database_url_exists': bool(os.environ.get('DATABASE_URL')),
+            'config_database_uri_exists': bool(app.config.get('SQLALCHEMY_DATABASE_URI'))
+        }
+        
+        return jsonify(info)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.before_request
 def before_request():
