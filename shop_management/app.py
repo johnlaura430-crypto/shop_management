@@ -829,6 +829,8 @@ def staff_activities():
     for user in staff_users:
         # Filtered date sales by this staff
         filtered_sales = Sale.query.filter(
+
+
             Sale.user_id == user.id,
             db.func.date(Sale.sale_date) == filter_date
         ).all()
@@ -869,6 +871,11 @@ def add_user():
         password = request.form['password']
         role = request.form['role']
         
+        # Prevent duplicate usernames
+        if User.query.filter_by(username=username).first():
+            flash(f'Username "{username}" already exists!', 'error')
+            return redirect(url_for('users'))
+        
         user = User(
             username=username,
             password_hash=generate_password_hash(password),
@@ -877,10 +884,13 @@ def add_user():
         
         db.session.add(user)
         db.session.commit()
-        flash(get_text('user') + ' ' + get_text('success_added'))
+        flash(get_text('user') + ' ' + get_text('success_added'), 'success')
+        
+        # Special message for owner accounts
+        if role == 'owner':
+            flash(f'✅ Owner account "{username}" created successfully!', 'info')
     
     return redirect(url_for('users'))
-
 @app.route('/edit_user/<int:id>', methods=['POST'])
 @login_required
 @owner_required
